@@ -34,4 +34,4 @@ jobs:
         file: ./Dockerfile.node-python
         push: true
         platforms: linux/amd64,linux/arm64
-        tags: ${{ secrets.DOCKER_USERNAME }}/node-python:latest
+        tags: ${{ secrets.DOCKER_USERNAME }}/images:node-python
