@@ -1,6 +1,8 @@
 name: Build and Push Docker Image
 
 on:
+  schedule:
+    - cron: '0 0 * * 0'
   push:
     branches:
       - main
@@ -31,4 +33,5 @@ jobs:
         context: .
         file: ./Dockerfile.node-python
         push: true
-        tags: ${{ secrets.DOCKER_USERNAME }}/images:node-python
+        platforms: linux/amd64,linux/arm64
+        tags: ${{ secrets.DOCKER_USERNAME }}/node-python:latest
