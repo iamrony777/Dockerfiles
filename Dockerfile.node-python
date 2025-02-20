@@ -1,7 +1,7 @@
-FROM node:23.1-bookworm-slim
+FROM node:lts-bookworm
 ENV PATH="/usr/local/bin:$PATH"
 WORKDIR /app
 RUN apt-get update
 RUN apt install python3-dev python3-pip python3-venv gcc g++ -y
 RUN apt install curl tmux jq -y
-RUN npm i -g bun pm2
+RUN npm i -g bun pm2@latest
