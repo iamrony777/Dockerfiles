@@ -1,0 +1,20 @@
+FROM iamrony777/images:node-python
+
+ARG NEXT_TELEMETRY_DISABLED=1
+ENV DISPLAY=":0"
+ENV PLAYWRIGHT_BROWSERS_PATH=/app/pw-browsers
+
+WORKDIR /app
+
+
+ENV PATH="/usr/local/bin:$PATH"
+
+# Display 
+RUN apt update
+RUN apt install xvfb build-essential htop libffi-dev libpci3 libegl1-mesa -y
+# ensure correct permissions for /tmp/.X11-unix to prevent Xvfb from issuing warnings
+RUN mkdir -p /tmp/.X11-unix && chmod 1777 /tmp/.X11-unix
+
+COPY --from=mcr.microsoft.com/playwright:v1.51.1-noble /ms-playwright /app/pw-browsers
+
+RUN chmod 777 /app/pw-browsers

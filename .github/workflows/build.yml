@@ -38,6 +38,7 @@ jobs:
 
   build-node:
     runs-on: ubuntu-latest
+    needs: build-node-python
 
     steps:
       - name: Checkout repository
@@ -60,3 +61,29 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: ${{ secrets.DOCKER_USERNAME }}/images:node
+
+  build-report-gen-base:
+    runs-on: ubuntu-latest
+    needs: build-node-python
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image (report-gen-base)
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile.report-gen-base
+          push: true
+          platforms: linux/amd64
+          tags: ${{ secrets.DOCKER_USERNAME }}/images:report-gen-base
