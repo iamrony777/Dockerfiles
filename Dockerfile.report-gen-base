@@ -15,6 +15,12 @@ RUN apt install xvfb build-essential htop libffi-dev libpci3 libegl1-mesa-dev -y
 # ensure correct permissions for /tmp/.X11-unix to prevent Xvfb from issuing warnings
 RUN mkdir -p /tmp/.X11-unix && chmod 1777 /tmp/.X11-unix
 
-COPY --from=mcr.microsoft.com/playwright:v1.51.1-noble /ms-playwright /app/pw-browsers
+# COPY --from=mcr.microsoft.com/playwright:v1.51.1-noble /ms-playwright /app/pw-browsers
+# RUN chmod 777 /app/pw-browsers
 
-RUN chmod 777 /app/pw-browsers
+
+RUN npm install -g playwright@latest
+RUN npx playwright install --dry-run
+RUN npx playwright install --with-deps
+
+RUN playwright --version
