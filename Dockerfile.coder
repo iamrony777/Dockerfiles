@@ -1,0 +1,77 @@
+FROM debian:bookworm
+ARG USER
+ENV USER=${USER:-root}
+ENV DOTFILES=https://github.com/FutureForge-Studios/dotfiles
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PATH="/usr/sbin:$PATH"
+
+RUN apt update \
+	&& apt install -y \
+	apt-transport-https apt-utils coreutils locales util-linux file ca-certificates \
+	curl procps gnupg-agent software-properties-common git \
+	sudo wget unzip bash xz-utils nginx \
+	&& curl -sSL https://packages.sury.org/php/apt.gpg | apt-key add - \
+	&& echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | tee /etc/apt/sources.list.d/php.list && \
+	curl -sSL https://nginx.org/keys/nginx_signing.key | apt-key add - \
+    && echo "deb http://nginx.org/packages/mainline/debian/ $(lsb_release -cs) nginx" | tee /etc/apt/sources.list.d/nginx.list
+
+# Install PHP 8.3 and extensions
+RUN apt update \
+    && apt install -y \
+    php8.3 php8.3-cli php8.3-fpm php8.3-common php8.3-opcache php8.3-mysql php8.3-mbstring \
+	php8.3-xml php8.3-curl php8.3-gd php8.3-zip php8.3-intl php8.3-imagick php8.3-redis \
+	php8.3-xdebug php8.3-pgsql php8.3-sqlite3
+
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# pyenv deps
+RUN apt update; apt install build-essential gcc g++ libssl-dev zlib1g-dev \
+	libbz2-dev libreadline-dev libsqlite3-dev curl \
+	libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev -y
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+RUN useradd --groups sudo --no-create-home --shell /bin/bash ${USER} \
+	&& echo "${USER} ALL=(ALL) NOPASSWD:ALL" >/etc/sudoers.d/${USER} \
+	&& chmod 0440 /etc/sudoers.d/${USER}
+
+USER ${USER}
+WORKDIR /home/${USER}
+RUN locale-gen en_US.UTF-8
+
+# pyenv install
+RUN curl https://pyenv.run | bash
+
+# pyenv add to .bashrc
+RUN echo export PYENV_ROOT="/home/$USER/.pyenv" >> ~/.bashrc 
+RUN echo 'command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
+RUN echo 'eval "$(pyenv init -)"' >> ~/.bashrc
+
+# nvm install
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+
+# nvm add to .bashrc
+RUN echo 'export NVM_DIR="$HOME/.nvm"'                                       >> "$HOME/.bashrc"
+RUN echo '[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm' >> "$HOME/.bashrc"
+RUN echo '[ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion" # This loads nvm bash_completion' >> "$HOME/.bashrc"
+
+# nodejs install & tools
+RUN bash -c 'source $HOME/.nvm/nvm.sh   && \
+	nvm install node                    && \
+	npm install -g tsx ts-node typescript bun yarn pnpm'
+
+# volta install
+RUN curl https://get.volta.sh | bash
+
+# volta to .bashrc
+RUN echo export VOLTA_HOME="$HOME/.volta" >> ~/.bashrc
+RUN echo 'command -v volta >/dev/null || export PATH="$VOLTA_HOME/bin:$PATH"' >> ~/.bashrc
+
+
+
+# port:9000 -> php-fpm
+# port:80 -> nginx
+# port:8000 -> vite
+# EXPOSE 80 9000 8000
+
+#	&& rm -rf /var/lib/apt/lists/*
