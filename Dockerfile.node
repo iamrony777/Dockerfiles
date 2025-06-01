@@ -3,3 +3,4 @@ ENV PATH="/usr/local/bin:$PATH"
 WORKDIR /app
 RUN apt-get update
 RUN apt install curl tmux gcc g++ cmake jq -y
+RUN npm i -g bun tsx pm2@latest
